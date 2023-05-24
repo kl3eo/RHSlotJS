@@ -13,6 +13,7 @@ import '../footer/footer.styles.scss';
 import '../modal/modal.styles.scss';
 import '../pay-table/pay-table.styles.scss';
 import '../instructions/instructions.styles.scss';
+import '../spbinder/spbinder.styles.scss';
 
 const SERVICES = {
     sound: SMSoundService,
@@ -40,6 +41,8 @@ export class App {
     static S_TOGGLE_SOUND = '#toggleSound';
     static S_TOGGLE_VIBRATION = '#toggleVibration';
     static S_VIBRATION_INSTRUCTIONS = '#vibrationInstructions';
+    static S_SP_BINDER_MODAL = '#spbinderModal';
+    static S_SP_BINDER_MODAL_BUTTON = '#toggleSpbinder';
     static S_INSTRUCTIONS_MODAL = '#instructionsModal';
     static S_INSTRUCTIONS_MODAL_BUTTON = '#toggleInstructions';
     static S_PAY_TABLE_MODAL = '#payTableModal';
@@ -59,10 +62,11 @@ export class App {
     slotMachine;
     payTable;
     instructionsModal;
+    spbinderModal;
 
     // State:
     // TODO: Create constants in a config file for all these numbers...
-    coins = parseInt(localStorage.coins, 10) || 100;
+    coins = parseInt(localStorage.coins, 10) || 3;
     jackpot = parseInt(localStorage.jackpot, 10) || 1000;
     spins = parseInt(localStorage.spins, 10) || 0;
     lastSpin = localStorage.lastSpin || 0;
@@ -85,7 +89,7 @@ export class App {
         this.handleGetPrice = this.handleGetPrice.bind(this);
 
         let focusActive = false;
-
+	
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Tab' && !focusActive) {
                 focusActive = true;
@@ -104,74 +108,58 @@ export class App {
         // Init/render conditional parts of the UI such as vibration and first-time only features:
         this.initUI();
 
-        /*
-        // TODO: Move this to CheatMode component.
-
-        const originalSpeed = slotMachine.speed;
-
-        let confirmation;
-        let yes;
-        let no;
-
-        const wait = () => {
-            // eslint-disable-next-line no-console
-            console.log('Ok... 👌');
-
-            setTimeout(() => {
-                // eslint-disable-next-line no-console
-                console.log(confirmation);
-            }, 5000 + Math.random() * 5000);
-        };
-
-        const cheat = () => {
-            slotMachine.speed = originalSpeed / 100;
-            confirmation = 'Ok, really... Last chance. Do yo want to go back to normal mode? 😠';
-            yes = normal; // eslint-disable-line no-use-before-define
-            no = wait;
-
-            // eslint-disable-next-line no-console
-            console.log('Ok, but remember time will go on as normal for you... ⏳');
-            // eslint-disable-next-line max-len, no-console
-            console.log('Do you want to go back before it\'s too late?
-            You don\'t want to happen to you what happened to Captain America 🛡️, do you?');
-        };
-
-        const normal = () => {
-            slotMachine.speed = originalSpeed;
-            confirmation = 'I\'m sure you are gonna like it...? Wanna play in God mode? 😏 💰';
-            yes = cheat;
-            no = wait;
-
-            // eslint-disable-next-line no-console
-            console.log('Playing in normal mode.');
-            // eslint-disable-next-line no-console
-            console.log('Wanna switch to God mode? 😏');
-        };
-
-        normal();
-
-        const yesGetter = () => { yes(); };
-        const noGetter = () => { no(); };
-
-        Object.defineProperties(window, {
-            yes: { get: yesGetter },
-            no: { get: noGetter },
-            Yes: { get: yesGetter },
-            No: { get: noGetter },
-        });
-
-        */
-
-
     }
 
     handleUseCoin() {
-        localStorage.coins = this.coins = Math.max(this.coins - 1, 0) || 100;
+        if (this.spins === 2) this.endGame().then(() => {console.log('ended game'); return}).catch((err) => console.log('Err:', err));
+	
+	localStorage.coins = this.coins = Math.max(this.coins - 1, 0);
         localStorage.jackpot = ++this.jackpot;
         localStorage.spins = ++this.spins;
         localStorage.lastSpin = this.lastSpin = Date.now();
 
         this.refreshGameInfo();
+    }
+
+    async setCoo () {
+      const urlee = this.makeUrlee('action_vg_sj')
+      fetch(urlee).then((response) => response.json()).then((result) => {
+        console.log('set session', result)
+      }).catch(function (err) { console.log('Error', err) })
+    }
+    
+    makeUrlee (s) {
+      const inFrame = window !== window.top
+      const h = inFrame ? 'https://slotjs.room-house.com' : this.getParentOrigin()
+      const reh = /https:\/\//gi
+      const hh = h.replace(reh, '')
+      const poh = hh.split(':')
+      const hhh = hh.split('.')
+      const checkerPort = (hhh[0] === 'aspen' || hhh[0] === 'cube' || hhh[0] === 'slotjs') ? '' : ':8453'
+      const genc = (hhh[0] === 'dussel' || hhh[0] === 'slotjs') ? '' : '/genc'
+      const u = 'https://' + poh[0] + checkerPort + '/cgi' + genc + '/' + s
+//console.log('here urlee is', u);
+      return u
+    }
+
+    getParentOrigin () {
+      let a = this.alpha; //paranoid flags
+      const locationAreDistinct = (window.location !== window.parent.location)
+      const parentOrigin = ((locationAreDistinct ? document.referrer : document.location) || '').toString()
+      if (parentOrigin) {
+        return new URL(parentOrigin).origin
+      }
+      const currentLocation = document.location
+      if (currentLocation.ancestorOrigins && currentLocation.ancestorOrigins.length) {
+        return currentLocation.ancestorOrigins[0]
+      }
+      return ''
+    }
+
+    async endGame() {
+	this.slotMachine.boundAccount = false;
+//console.log('endGame: set bound to', this.slotMachine.boundAccount);
+	this.setCoo().then(() => {console.log('reset cookie');  localStorage.coins = this.coins = 3; localStorage.spins = this.spins = 0;});
     }
 
     handleGetPrice(jackpotPercentage) {
@@ -210,22 +198,34 @@ export class App {
         const playButtonElement = document.querySelector(App.S_PLAY);
 
         if (isFirstTime) {
-
+            
             playButtonElement.onclick = () => {
                 this.isFirstTime = localStorage.firstTime = false;
 
                 playButtonElement.setAttribute('hidden', true);
 
                 this.instructionsModal.close();
+		this.spbinderModal.close();
 
                 document.activeElement.blur();
 
-                this.slotMachine.start();
+                // this.slotMachine.start();
+		this.setCoo();
+		
             };
         } else {
             playButtonElement.setAttribute('hidden', true);
         }
 
+        this.spbinderModal = new Modal(
+            App.S_SP_BINDER_MODAL,
+            App.S_SP_BINDER_MODAL_BUTTON,
+            'spbinder',
+            false,
+            false,
+            this.handleModalToggle,
+        );
+	
         // TODO: Pass params as options, except for root selector or some of the basic ones...:
 
         // Init/render instructions modal, which might be open straight away:

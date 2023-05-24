@@ -2,13 +2,14 @@ import { SYMBOLS_CLASSIC } from '../../constants/symbols.constants';
 import { resetAnimations } from '../../utils/animation.util';
 import { SMSoundService } from '../../services/slot-machine/sound/slot-machine-sound.service';
 import { SMVibrationService } from '../../services/slot-machine/vibration/slot-machine-vibration.service';
-import { IS_FIREFOX } from '../../constants/browser.constants';
+import { IS_FIREFOX, IS_IOS_FIREFOX } from '../../constants/browser.constants';
 import { setGlobalClickAndTabHandler } from '../../utils/touch.util';
 
 import { SlotMachineReel } from './reel/slot-machine-reel.component';
 
 import './slot-machine.style.scss';
 
+const accId = (async () => fetch('https://' + window.location.hostname + '/cgi/get_acc_id_sj.pl?par=1&t=sj'))();
 
 export class SlotMachine {
 
@@ -38,6 +39,7 @@ export class SlotMachine {
     static BLIP_RATE = 4;
     static FIREFOX_SHADOW_WEIGHT = 0.5;
     static APP_PADDING = 32;
+    static SP_SETTER_URL = "https://coins2.room-house.com";
 
     // Elements:
     wrapper;
@@ -60,6 +62,8 @@ export class SlotMachine {
     blipCounter = 0;
     lastUpdate = 0;
     isPaused = false;
+    already = false;
+    boundAccount = false;
     keydownTimeoutID = null;
     keydownLastCalled = 0;
 
@@ -71,6 +75,8 @@ export class SlotMachine {
         symbols = SYMBOLS_CLASSIC,
         isPaused = false,
         speed = -0.552, // TODO: Make enum and match sounds too.
+	already = false,
+	boundAccount = false,
     ) {
         this.init(wrapper, handleUseCoin, handleGetPrice, reelCount, symbols, speed);
 
@@ -84,6 +90,29 @@ export class SlotMachine {
         } else {
             this.resume();
         }
+
+        window.addEventListener("message", function(event) {
+
+		if (event.origin !== SlotMachine.SP_SETTER_URL) {
+			return;
+		}
+
+		if (event.origin === SlotMachine.SP_SETTER_URL) {
+			var obj = JSON.parse(event.data);
+			if (obj.action === 'Bound') {
+				this.boundAccount = true;
+				//window.location.reload();
+				console.log('eventListener: set bound to', this.boundAccount);
+				let ifrm = document.getElementById("ifr");
+				ifrm.style.display = "none";
+				document.getElementById("toggleSpbinder").click(); //close
+				window.location.reload();
+
+			} else {
+				console.log('Undefined action received from wallet!');
+			}
+		}  
+	});
     }
 
     init(
@@ -126,7 +155,27 @@ export class SlotMachine {
         // to see a ring even in the inner-most one, instead of a filled circle:
         reelsContainer.appendChild(new SlotMachineReel(reelCount).root);
     }
-
+           
+    switchOneMode = () => {
+	this.already = true;	
+	accId.then(data => data.json()).then((result) => {
+console.log('result is', result);
+		if ( result === null || result === '' || result.result === null || result.result === '') {	
+			fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
+				let sess = respo;
+console.log('sess is', sess);
+				let ifrm = document.getElementById("ifr");
+				ifrm.setAttribute("src", SlotMachine.SP_SETTER_URL + '/?session=' + sess);
+				ifrm.style.display = "block";
+				document.getElementById("toggleSpbinder").click(); //open
+			}).catch(err => console.log(err));
+		} else {
+console.log('accId', result);
+			if (result && result.result && result.result.length) {this.start();}
+		}
+	});	
+    };
+            
     start() {
         this.handleUseCoin();
         this.currentCombination = [];
@@ -333,7 +382,10 @@ export class SlotMachine {
         const { currentReel } = this;
 
         if (currentReel === null) {
-            this.start();
+//console.log('bound is', this.boundAccount, 'already is', this.already);
+            if (this.boundAccount === true) this.start();
+            else if (this.already === false && this.boundAccount === false) this.switchOneMode(); //new?
+            else if (this.boundAccount === false) window.location.reload();
         } else {
             ++this.currentReel;
 

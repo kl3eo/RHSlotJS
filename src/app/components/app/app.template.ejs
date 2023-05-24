@@ -53,9 +53,21 @@
         </section>
     </main>
 
+
     <div class="app__coverLeft"></div>
     <div class="app__coverRight"></div>
 
+    <section class="modal__root" id="spbinderModal">
+        <h2 class="modal__title spbinder__title">
+            <span class="modal__titleIcon spbinder__titleIcon">🏆</span>Pay to Play
+            <button class="modal__button" aria-label="Close Popup and Resume Game">
+                <span class="modal__buttonIcon">×</span>
+            </button>
+        </h2>
+<iframe id="ifr" frameborder="0" style="overflow-x:hidden;overflow=y:hidden;text-align:left;height:100%;width:100%;background:#F9FAF7;display:none;"></iframe>
+        <%- include ../spbinder/spbinder.template.ejs %>
+    </section>
+    
     <section class="modal__root" id="instructionsModal">
         <h2 class="modal__title instructions__title">
             <span class="modal__titleIcon instructions__titleIcon">🕹️</span>Instructions
@@ -63,7 +75,6 @@
                 <span class="modal__buttonIcon">×</span>
             </button>
         </h2>
-
         <%- include ../instructions/instructions.template.ejs %>
     </section>
 
