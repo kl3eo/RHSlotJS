@@ -101,7 +101,6 @@ export class SlotMachine {
 			var obj = JSON.parse(event.data);
 			if (obj.action === 'Bound') {
 				this.boundAccount = true;
-				//window.location.reload();
 				console.log('eventListener: set bound to', this.boundAccount);
 				let ifrm = document.getElementById("ifr");
 				ifrm.style.display = "none";
@@ -149,7 +148,7 @@ console.log('shuffled_syms', shuffledSymbols);
         for (let reelIndex = 0; reelIndex < reelCount; ++reelIndex) {
             let randomAngle = alpha * Math.floor(Math.random() * (360/alpha));
             const reel = new SlotMachineReel(reelIndex, alpha, shuffledSymbols, diameter, randomAngle);
-            //reel.style.transform = `rotate(${ randomAngle }deg)`;
+            reel.style.transform = `rotate(${ randomAngle }deg)`;
             reelsContainer.appendChild(reel.root);
             reels.push(reel);
         }
@@ -185,7 +184,7 @@ console.log('accId', result);
         this.currentReel = 0;
         this.zoomOut();
         this.display.classList.remove(SlotMachine.C_IS_WIN, SlotMachine.C_IS_FAIL);
-        this.reels.forEach((reel) => reel.reset());
+        //this.reels.forEach((reel) => reel.reset());
         resetAnimations();
 
         SMSoundService.coin();
@@ -213,7 +212,7 @@ console.log('accId', result);
 
             this.display.classList.add(SlotMachine.C_IS_FAIL);
           }
-        }, "2000");
+        }, "3000");
 
     }
 
