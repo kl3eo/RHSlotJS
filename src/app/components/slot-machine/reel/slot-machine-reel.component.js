@@ -32,7 +32,7 @@ export class SlotMachineReel {
     angle = 0;
     stopAt = 0;
 
-    constructor(index, alpha, symbols, diameter) {
+    constructor(index, alpha, symbols, diameter, randomAngle) {
         this.index = index;
         this.alpha = alpha;
 
@@ -57,10 +57,11 @@ export class SlotMachineReel {
             shadowOpacityWeight = 1;
         }
 
-        const shadowCount = this.shadowCount = Math.max(2, Math.round((diameter - 0.5 - (2 * index)) * Math.PI / symbols.length));
+        //const shadowCount = this.shadowCount = Math.max(2, Math.round((diameter - 0.5 - (2 * index)) * Math.PI / symbols.length));
+        const shadowCount = 2; //hack ash
         const beta = 1 / shadowCount;
 
-        shuffle(symbols);
+        //shuffle(symbols);
 
         symbols.forEach((symbol, symbolIndex) => {
             const cellFigure = createElement(C_FIGURE, symbol);
@@ -77,8 +78,10 @@ export class SlotMachineReel {
                 ));
             }
         });
+//console.log('random angle', randomAngle);
+//        root.style.transform = `rotate(${ randomAngle }deg)`;
     }
-
+    
     reset() {
         const { root, style, stopAt } = this;
 
@@ -90,9 +93,15 @@ export class SlotMachineReel {
     }
 
     stop(speed, deltaAlpha) {
-        const { alpha, root } = this;
+      const { alpha, root } = this;
+console.log('children', root.children.length);
+      fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_random&max='+root.children.length, {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
+        
         const angle = (360 - this.angle - deltaAlpha) % 360;
-        const index = Math.ceil(angle / alpha);
+//console.log('angle', angle, 'deltaAlpha', deltaAlpha);
+//        const index = Math.ceil(angle / alpha);
+        const index = respo;
+console.log('respo', respo);
         const stopAt = index * alpha;
         const animationName = `stop-${ this.index }`;
         const animationDuration = stopAtAnimation(
@@ -106,8 +115,9 @@ export class SlotMachineReel {
         this.stopAt = stopAt;
         this.style.animation = `${ animationName } ${ animationDuration }ms ease-out forwards`;
         root.classList.add(SlotMachineReel.C_IS_STOP);
-
-        return (root.children[index * this.shadowCount] || root.children[0]).innerText;
+//console.log('sha', this.shadowCount, 'ind', index);
+        //return (root.children[index * this.shadowCount] || root.children[0]).innerText;
+        return (root.children[index] || root.children[0]).innerText;
+      }).catch(err => console.log(err));
     }
-
 }

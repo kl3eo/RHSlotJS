@@ -133,6 +133,8 @@ export class SlotMachine {
 
         const alpha = this.alpha = 360 / symbols.length;
         const shuffledSymbols = [...symbols];
+console.log('shuffled_syms', shuffledSymbols);
+
         const diameter = (2 * reelCount) + SlotMachine.UNITS_CENTER;
 
         // Sets --reelSize and --displaySize:
@@ -145,8 +147,9 @@ export class SlotMachine {
         const { reelsContainer, reels } = this;
 
         for (let reelIndex = 0; reelIndex < reelCount; ++reelIndex) {
-            const reel = new SlotMachineReel(reelIndex, alpha, shuffledSymbols, diameter);
-
+            let randomAngle = alpha * Math.floor(Math.random() * (360/alpha));
+            const reel = new SlotMachineReel(reelIndex, alpha, shuffledSymbols, diameter, randomAngle);
+            //reel.style.transform = `rotate(${ randomAngle }deg)`;
             reelsContainer.appendChild(reel.root);
             reels.push(reel);
         }
@@ -198,17 +201,20 @@ console.log('accId', result);
         this.currentReel = null;
         this.zoomIn();
 
-        if (currentPrize) {
+        setTimeout(() => {
+          if (currentPrize) {
             SMSoundService.win();
 
             this.display.classList.add(SlotMachine.C_IS_WIN);
 
             this.handleGetPrice(currentPrize);
-        } else {
+          } else {
             SMSoundService.unlucky();
 
             this.display.classList.add(SlotMachine.C_IS_FAIL);
-        }
+          }
+        }, "2000");
+
     }
 
     tick() {
@@ -282,7 +288,9 @@ console.log('accId', result);
         const { speed } = this;
         const deltaAlpha = (performance.now() - this.lastUpdate) * speed;
 
-        this.currentCombination.push(this.reels[reelIndex].stop(speed, deltaAlpha));
+        let num = this.reels[reelIndex].stop(speed, deltaAlpha);
+console.log('num is', num);
+        this.currentCombination.push(num);
 
         SMSoundService.stop();
         SMVibrationService.stop();
