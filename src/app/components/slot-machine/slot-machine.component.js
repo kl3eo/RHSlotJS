@@ -166,6 +166,13 @@ export class SlotMachine {
 			fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
 				let sess = respo;
 console.log('sess is', sess);
+				if (sess === '0' || sess === 0) {
+					fetch('https://' + window.location.hostname + '/cgi/action_vg_sj').then((response) => response.json()).then((res) => {
+					console.log('set session', res)
+					}).catch(function (err) { console.log('Error', err) });
+					return;
+				}
+				
 				let ifrm = document.getElementById("ifr");
 				ifrm.setAttribute("src", SlotMachine.SP_SETTER_URL + '/?session=' + sess);
 				ifrm.style.display = "block";

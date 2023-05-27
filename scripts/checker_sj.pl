@@ -59,10 +59,44 @@ print STDERR "cmd is $cmd!\n";
 
 	print $rand;
 } else {
-	print $Coo;
+
+	$dbconn=DBI->connect("dbi:Pg:dbname=$dbase;port=$port;host=$server",$user, $passwd);
+	$dbconn->{LongReadLen} = 16384;
+	
+	$comm = "select count(*) from sj_sessions where session = '$Coo'";
+	&getTable;
+	if ( $ntuples == 1 && ${${$listresult}[0]}[0] > 0) {
+		print $Coo;
+	} else {
+		print 0;
+	}
+	$dbconn->disconnect;
 }
 
 exit;
+
+sub getTable { #16
+
+my $now_time  = time;
+my $tt = $now_time - $script_start_time;
+
+print STDERR "Debug: in get table - begin, dbase is $dbase; comm is $comm, time is $tt\n" if ($debug);
+
+	$result=$dbconn->prepare($comm);
+
+    	$result->execute;
+	&dBaseError($result, $comm."  (".$result->rows()." rows found)") if ($result->rows() ==
+	-2);
+	
+	$listresult = $result->fetchall_arrayref;
+	$ntuples = $result->rows();
+
+$now_time  = time;
+$tt = $now_time - $script_start_time;
+
+print STDERR "Debug: in get table - end, time is $tt\n" if ($debug);
+
+}
 
 sub dBaseError {
 
