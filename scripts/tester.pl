@@ -21,7 +21,7 @@ my $acc_id = defined($query->param('acc_id')) ? $query->param('acc_id') : '';
 
 my $bhash = defined($query->param('bhash')) ? $query->param('bhash') : '';
 my $txhash = defined($query->param('txhash')) ? $query->param('txhash') : '';
-
+#https://discord.com/channels/351390305561346060/351390306073313290
 my $cmd = '';
 
 $dbconn=DBI->connect("dbi:Pg:dbname=$dbase;port=$port;host=$server",$user, $passwd);

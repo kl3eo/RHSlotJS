@@ -132,7 +132,7 @@ export class SlotMachine {
 
         const alpha = this.alpha = 360 / symbols.length;
         const shuffledSymbols = [...symbols];
-console.log('shuffled_syms', shuffledSymbols);
+//console.log('shuffled_syms', shuffledSymbols);
 
         const diameter = (2 * reelCount) + SlotMachine.UNITS_CENTER;
 
@@ -161,7 +161,7 @@ console.log('shuffled_syms', shuffledSymbols);
     switchOneMode = () => {
 	this.already = true;	
 	accId.then(data => data.json()).then((result) => {
-console.log('result is', result);
+//console.log('result is', result);
 		if ( result === null || result === '' || result.result === null || result.result === '') {	
 			fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
 				let sess = respo;
@@ -184,7 +184,7 @@ console.log('accId', result);
         this.currentReel = 0;
         this.zoomOut();
         this.display.classList.remove(SlotMachine.C_IS_WIN, SlotMachine.C_IS_FAIL);
-        //this.reels.forEach((reel) => reel.reset());
+        this.reels.forEach((reel) => reel.reset());
         resetAnimations();
 
         SMSoundService.coin();
@@ -212,7 +212,7 @@ console.log('accId', result);
 
             this.display.classList.add(SlotMachine.C_IS_FAIL);
           }
-        }, "3000");
+        }, "2400");
 
     }
 
@@ -283,16 +283,18 @@ console.log('accId', result);
         style.setProperty(SlotMachine.V_DISPLAY_ZOOM, `${ root.offsetWidth / display.offsetWidth }`);
     }
 
-    stopReel(reelIndex) {
+    async stopReel(reelIndex) {
         const { speed } = this;
         const deltaAlpha = (performance.now() - this.lastUpdate) * speed;
-
-        let num = this.reels[reelIndex].stop(speed, deltaAlpha);
-console.log('num is', num);
-        this.currentCombination.push(num);
-
-        SMSoundService.stop();
-        SMVibrationService.stop();
+//console.log('combi'+reelIndex, this.currentCombination);
+        this.reels[reelIndex].stop(speed, deltaAlpha, reelIndex, this.currentCombination)
+	.then((num) => {
+//console.log('num is', num, 'ri is', ri);
+		//this.currentCombination.push(num);
+		SMSoundService.stop();
+		SMVibrationService.stop();
+	})
+	.catch((err) => console.log('Err:',err));
     }
 
     checkPrize() {
@@ -303,7 +305,7 @@ console.log('num is', num);
         let lastSymbol = '';
         let maxSymbol = '';
         let maxPrize = 0;
-
+//console.log('combi_final', currentCombination);
         for (let i = 0; i < reelCount; ++i) {
             const symbol = currentCombination[i];
             const occurrences = occurrencesCount[symbol] = lastSymbol === symbol ? occurrencesCount[symbol] + 1 : 1;

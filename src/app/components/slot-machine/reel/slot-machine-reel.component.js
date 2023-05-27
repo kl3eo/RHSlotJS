@@ -58,11 +58,11 @@ export class SlotMachineReel {
         }
 
         //const shadowCount = this.shadowCount = Math.max(2, Math.round((diameter - 0.5 - (2 * index)) * Math.PI / symbols.length));
-        const shadowCount = 2; //hack ash
+        const shadowCount = this.shadowCount = 2; //hack ash
         const beta = 1 / shadowCount;
 
         //shuffle(symbols);
-
+//console.log('symbols', symbols);
         symbols.forEach((symbol, symbolIndex) => {
             const cellFigure = createElement(C_FIGURE, symbol);
             const cell = createElement(C_CELL, cellFigure, symbolIndex * alpha);
@@ -76,10 +76,9 @@ export class SlotMachineReel {
                     alpha * (symbolIndex + (beta * shadowIndex)),
                     `opacity: ${ shadowOpacityWeight * (1 - (beta * shadowIndex)) }; `,
                 ));
+//console.log('created', root.children);	
             }
         });
-//console.log('random angle', randomAngle);
-//        root.style.transform = `rotate(${ randomAngle }deg)`;
     }
     
     reset() {
@@ -92,17 +91,18 @@ export class SlotMachineReel {
         this.stopAt = 0;
     }
 
-    stop(speed, deltaAlpha) {
+    async stop(speed, deltaAlpha, ri, obj) {
       const { alpha, root } = this;
-console.log('children', root.children.length);
-      fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_random&max='+root.children.length, {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
-        
+//console.log('children', root.children.length);
+//console.log('reel', ri);
+      fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_random&max='+root.children.length+'&num='+ri, {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
+//console.log('this_angle', this.angle, 'delta', deltaAlpha);        
         const angle = (360 - this.angle - deltaAlpha) % 360;
-//console.log('angle', angle, 'deltaAlpha', deltaAlpha);
-//        const index = Math.ceil(angle / alpha);
+        //const indexo = Math.ceil(angle / alpha);
         const index = respo;
-console.log('respo', respo);
-        const stopAt = index * alpha;
+        //const stopAt = indexo * alpha;
+	const stopAt = index * alpha;
+//console.log('respo', respo, 'angle', angle, 'alpha', alpha, 'stop', stopAt,'this_angle', this.angle, 'delta', deltaAlpha);
         const animationName = `stop-${ this.index }`;
         const animationDuration = stopAtAnimation(
             animationName,
@@ -115,9 +115,13 @@ console.log('respo', respo);
         this.stopAt = stopAt;
         this.style.animation = `${ animationName } ${ animationDuration }ms ease-out forwards`;
         root.classList.add(SlotMachineReel.C_IS_STOP);
-//console.log('sha', this.shadowCount, 'ind', index);
+	let indexo = this.shadowCount * index; //hack ash
+	let re = (root.children[index * this.shadowCount] || root.children[0]).innerText
         //return (root.children[index * this.shadowCount] || root.children[0]).innerText;
-        return (root.children[index] || root.children[0]).innerText;
+//console.log('end of stop: index is', index, 'inner is', re);
+	obj.push(re);
+//console.log('obj is', obj);
+        return re; // hack ash
       }).catch(err => console.log(err));
     }
 }

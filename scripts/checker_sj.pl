@@ -7,6 +7,12 @@ use Date::Calc qw(Day_of_Week);
 my $scriptURL = CGI::url();
 my $addr = $ENV{'REMOTE_ADDR'};
 
+my $server = "127.0.0.1";
+my $user = "postgres";
+my $passwd = "postgres";
+my $dbase = "cp";
+my $port = 5432;
+
 my $ddositsuko = ddos_check($scriptURL);
 
 my $par = 31;
@@ -26,6 +32,10 @@ $query = new CGI;
 my $Coo = $query->cookie('session') || '';
 my $mode = defined($query->param('mode')) ? $query->param('mode') : '';
 my $maximum = defined($query->param('max')) ? $query->param('max') : 24;
+my $reel = defined($query->param('num')) ? $query->param('num') : 0;
+$reel =~ s/(\r|\n|;|'|"|`)//g;
+
+print STDERR "Reel is $reel!\n";
 
 my $max = int ($maximum/2);
 
@@ -33,7 +43,20 @@ print "Content-type:text/html; charset=UTF-8\r\n\r\n";
 
 if ($mode eq "get_random") {
 
+	$dbconn=DBI->connect("dbi:Pg:dbname=$dbase;port=$port;host=$server",$user, $passwd);
+	$dbconn->{LongReadLen} = 16384;
+	
 	my $rand = int(rand($max));
+	
+	#$rand = 8 if ($reel < 3);
+
+	$cmd = "update sj_sessions set r$reel=$rand where session='$Coo'";
+print STDERR "cmd is $cmd!\n";
+	my $result=$dbconn->prepare($cmd);
+	$result->execute();
+		
+	$dbconn->disconnect;
+
 	print $rand;
 } else {
 	print $Coo;
