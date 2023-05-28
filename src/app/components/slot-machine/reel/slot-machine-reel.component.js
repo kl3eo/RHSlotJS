@@ -93,16 +93,18 @@ export class SlotMachineReel {
 
     async stop(speed, deltaAlpha, ri, obj) {
       const { alpha, root } = this;
-//console.log('children', root.children.length);
-//console.log('reel', ri);
-      fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_random&max='+root.children.length+'&num='+ri, {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
-//console.log('this_angle', this.angle, 'delta', deltaAlpha);        
+	
+      let fData = new FormData();	
+      fData.append('mode', 'get_random');
+      fData.append('num', ri);
+      if (ri === 4) {fData.append('old_coo', localStorage.session); console.log('sending old sess', localStorage.session);}
+	
+     fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {body: fData, method: 'post', credentials: 'include'}).then(respo => respo.text()).then((respo) => {
         const angle = (360 - this.angle - deltaAlpha) % 360;
-        //const indexo = Math.ceil(angle / alpha);
         const index = respo;
-        //const stopAt = indexo * alpha;
 	const stopAt = index * alpha;
 //console.log('respo', respo, 'angle', angle, 'alpha', alpha, 'stop', stopAt,'this_angle', this.angle, 'delta', deltaAlpha);
+console.log('respo', respo);
         const animationName = `stop-${ this.index }`;
         const animationDuration = stopAtAnimation(
             animationName,
@@ -117,10 +119,8 @@ export class SlotMachineReel {
         root.classList.add(SlotMachineReel.C_IS_STOP);
 	let indexo = this.shadowCount * index; //hack ash
 	let re = (root.children[index * this.shadowCount] || root.children[0]).innerText
-        //return (root.children[index * this.shadowCount] || root.children[0]).innerText;
-//console.log('end of stop: index is', index, 'inner is', re);
 	obj.push(re);
-//console.log('obj is', obj);
+console.log('obj is', obj);
         return re; // hack ash
       }).catch(err => console.log(err));
     }

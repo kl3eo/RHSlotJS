@@ -165,12 +165,14 @@ export class SlotMachine {
 		if ( result === null || result === '' || result.result === null || result.result === '') {	
 			fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
 				let sess = respo;
-console.log('sess is', sess);
+console.log('sess is', sess); 
 				if (sess === '0' || sess === 0) {
 					fetch('https://' + window.location.hostname + '/cgi/action_vg_sj').then((response) => response.json()).then((res) => {
 					console.log('set session', res)
 					}).catch(function (err) { console.log('Error', err) });
 					return;
+				} else {
+					localStorage.setItem('session', sess);
 				}
 				
 				let ifrm = document.getElementById("ifr");
@@ -202,12 +204,13 @@ console.log('accId', result);
     }
 
     stop() {
-        const currentPrize = this.checkPrize();
-
-        this.currentReel = null;
-        this.zoomIn();
 
         setTimeout(() => {
+          const currentPrize = this.checkPrize();
+
+          this.currentReel = null;
+          this.zoomIn();
+
           if (currentPrize) {
             SMSoundService.win();
 
@@ -312,7 +315,7 @@ console.log('accId', result);
         let lastSymbol = '';
         let maxSymbol = '';
         let maxPrize = 0;
-//console.log('combi_final', currentCombination);
+console.log('combi_final', currentCombination);
         for (let i = 0; i < reelCount; ++i) {
             const symbol = currentCombination[i];
             const occurrences = occurrencesCount[symbol] = lastSymbol === symbol ? occurrencesCount[symbol] + 1 : 1;

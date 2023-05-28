@@ -25,43 +25,80 @@ if ($ddositsuko > $par) {
 
 		print STDERR "$addr: DDOS firewall applied!\n";
 	}
+	exit;
 }
  
 $query = new CGI;
 
 my $Coo = $query->cookie('session') || '';
 my $mode = defined($query->param('mode')) ? $query->param('mode') : '';
+
 my $maximum = defined($query->param('max')) ? $query->param('max') : 24;
+exit unless ($maximum =~ /^\d+$/);
+
 my $reel = defined($query->param('num')) ? $query->param('num') : 0;
 $reel =~ s/(\r|\n|;|'|"|`)//g;
+exit unless ($reel =~ /^\d+$/);
 
-print STDERR "Reel is $reel!\n";
+my $old_coo = defined($query->param('old_coo')) ? $query->param('old_coo') : '';
+
+#print STDERR "Reel is $reel!\n";
 
 my $max = int ($maximum/2);
 
 print "Content-type:text/html; charset=UTF-8\r\n\r\n";
 
+
+$dbconn=DBI->connect("dbi:Pg:dbname=$dbase;port=$port;host=$server",$user, $passwd);
+$dbconn->{LongReadLen} = 16384;
+
 if ($mode eq "get_random") {
 
-	$dbconn=DBI->connect("dbi:Pg:dbname=$dbase;port=$port;host=$server",$user, $passwd);
-	$dbconn->{LongReadLen} = 16384;
 	
 	my $rand = int(rand($max));
 	
-	#$rand = 8 if ($reel < 3);
+	exit unless ($reel >= 0 && $reel < 5);
+	
+	#$rand = 8 if ($reel < 3); #test
 
-	$cmd = "update sj_sessions set r$reel=$rand where session='$Coo'";
-print STDERR "cmd is $cmd!\n";
-	my $result=$dbconn->prepare($cmd);
-	$result->execute();
-		
-	$dbconn->disconnect;
+	if ($reel ne '4') {
+		$cmd = "update sj_sessions set r$reel=$rand where session='$Coo'";
+		my $result=$dbconn->prepare($cmd);
+		$result->execute();
+	}
+	
+	if ($reel eq '4') {
+		$comm = "select gnum, addr from sj_sessions where session='$Coo'";
+		&getTable;
+		my $gnum = ${${$listresult}[0]}[0];
+		my $addr = ${${$listresult}[0]}[1];
+		my $new_coo_arrived = ($gnum eq '0' && length($addr) == 0) ? 1 : 0;
+		my $new_gnum = $gnum + 1;
+
+#print STDERR "reel4: new coo? $new_coo_arrived, gnum is $gnum, addr is $addr!\n";
+
+		unless ($new_coo_arrived) {
+			my $cmd = "update sj_sessions set gnum=$new_gnum, r4=$rand where session='$Coo'";
+			my $result=$dbconn->prepare($cmd);
+			$result->execute();
+		} else {
+			$old_coo =~ s/(\r|\n|;|'|"|`)//g;
+			exit unless ($old_coo =~ /[a-zA-Z]{24}/);
+			$comm = "select gnum, addr from sj_sessions where session='$old_coo'";
+			&getTable;
+			my $gnum = ${${$listresult}[0]}[0];
+			my $good_acc_id = ${${$listresult}[0]}[1];
+			if ($gnum eq '2' && length($good_acc_id) == 48 && substr($good_acc_id,0,1) == '5') {
+				my $cmd = "update sj_sessions set last_addr='$good_acc_id', r4=$rand where session='$Coo'";
+				my $result=$dbconn->prepare($cmd);
+				$result->execute();
+			}		
+		}		
+	}
+
 
 	print $rand;
 } else {
-
-	$dbconn=DBI->connect("dbi:Pg:dbname=$dbase;port=$port;host=$server",$user, $passwd);
-	$dbconn->{LongReadLen} = 16384;
 	
 	$comm = "select count(*) from sj_sessions where session = '$Coo'";
 	&getTable;
@@ -70,9 +107,11 @@ print STDERR "cmd is $cmd!\n";
 	} else {
 		print 0;
 	}
-	$dbconn->disconnect;
+
 }
 
+		
+$dbconn->disconnect;
 exit;
 
 sub getTable { #16

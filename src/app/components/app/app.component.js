@@ -124,7 +124,7 @@ export class App {
     async setCoo () {
       const urlee = this.makeUrlee('action_vg_sj')
       fetch(urlee).then((response) => response.json()).then((result) => {
-        console.log('set session', result)
+        console.log('set session', result);
       }).catch(function (err) { console.log('Error', err) })
     }
     
@@ -159,7 +159,7 @@ export class App {
     async endGame() {
 	this.slotMachine.boundAccount = false;
 //console.log('endGame: set bound to', this.slotMachine.boundAccount);
-	this.setCoo().then(() => {console.log('reset cookie');  localStorage.coins = this.coins = 3; localStorage.spins = this.spins = 0;});
+	this.setCoo().then(() => {console.log('reset cookie'); localStorage.coins = this.coins = 3; localStorage.spins = this.spins = 0;});
     }
 
     handleGetPrice(jackpotPercentage) {
