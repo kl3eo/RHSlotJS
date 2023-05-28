@@ -54,7 +54,7 @@ $dbconn=DBI->connect("dbi:Pg:dbname=$dbase;port=$port;host=$server",$user, $pass
 
 $dbconn->{LongReadLen} = 16384;
 
-#CREATE TABLE sj_sessions (session text, date_and_time timestamp, ip text, addr text, bnum numeric, last_addr text, sum numeric, dest text, r0 int2 default 0, r1 int2 default 0, r2 int2 default 0, r3 int2 default 0, r4 int2 default 0, gnum int2 default 0);
+#CREATE TABLE sj_sessions (session text, date_and_time timestamp, ip text, addr text, bnum numeric, last_addr text, sum numeric, dest text, r0 int2 default -1, r1 int2 default -1, r2 int2 default -1, r3 int2 default -1, r4 int2 default -1, gnum int2 default 0, max int2 default 0);
 if ($with_session) {
 	my $cmd = "insert into sj_sessions (session, ip, date_and_time) values (?, ?, current_timestamp)";
 	my $result=$dbconn->prepare($cmd);

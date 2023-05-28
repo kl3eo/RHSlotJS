@@ -97,14 +97,16 @@ export class SlotMachineReel {
       let fData = new FormData();	
       fData.append('mode', 'get_random');
       fData.append('num', ri);
-      if (ri === 4) {fData.append('old_coo', localStorage.session); console.log('sending old sess', localStorage.session);}
+      fData.append('max', root.children.length);
+      if (ri === 4) {fData.append('old_coo', localStorage.session); /*console.log('sending old sess', localStorage.session);*/}
 	
      fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {body: fData, method: 'post', credentials: 'include'}).then(respo => respo.text()).then((respo) => {
+        if (respo.match(/^[0-9]+$/) === null) throw new TypeError('RPC err')
         const angle = (360 - this.angle - deltaAlpha) % 360;
         const index = respo;
 	const stopAt = index * alpha;
 //console.log('respo', respo, 'angle', angle, 'alpha', alpha, 'stop', stopAt,'this_angle', this.angle, 'delta', deltaAlpha);
-console.log('respo', respo);
+//console.log('respo', respo);
         const animationName = `stop-${ this.index }`;
         const animationDuration = stopAtAnimation(
             animationName,
@@ -120,8 +122,8 @@ console.log('respo', respo);
 	let indexo = this.shadowCount * index; //hack ash
 	let re = (root.children[index * this.shadowCount] || root.children[0]).innerText
 	obj.push(re);
-console.log('obj is', obj);
-        return re; // hack ash
-      }).catch(err => console.log(err));
+//console.log('obj is', obj);
+        return; // hack ash
+      }).catch(err => {console.log('fetch:', err); throw new TypeError('RPC2 err')});
     }
 }

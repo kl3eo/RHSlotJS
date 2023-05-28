@@ -165,10 +165,12 @@ export class App {
     handleGetPrice(jackpotPercentage) {
         const price = Math.min(Math.max(Math.ceil(jackpotPercentage * this.jackpot), 10), this.jackpot);
 
-        localStorage.jackpot = this.jackpot = Math.max(this.jackpot - price, 0) || 1000;
-        localStorage.coins = this.coins += price;
-
-        this.refreshGameInfo();
+        //localStorage.jackpot = this.jackpot = Math.max(this.jackpot - price, 0) || 1000;
+        //localStorage.coins = this.coins += price;
+	fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_claim&claim='+jackpotPercentage, {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
+		console.log('claimed', jackpotPercentage, 'result', respo);
+		this.refreshGameInfo();
+	}).catch(err => console.log(err));
     }
 
     refreshGameInfo() {

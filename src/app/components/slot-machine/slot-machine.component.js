@@ -163,7 +163,7 @@ export class SlotMachine {
 	accId.then(data => data.json()).then((result) => {
 //console.log('result is', result);
 		if ( result === null || result === '' || result.result === null || result.result === '') {	
-			fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
+			fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_coo', {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
 				let sess = respo;
 console.log('sess is', sess); 
 				if (sess === '0' || sess === 0) {
@@ -299,12 +299,13 @@ console.log('accId', result);
 //console.log('combi'+reelIndex, this.currentCombination);
         this.reels[reelIndex].stop(speed, deltaAlpha, reelIndex, this.currentCombination)
 	.then((num) => {
-//console.log('num is', num, 'ri is', ri);
-		//this.currentCombination.push(num);
-		SMSoundService.stop();
-		SMVibrationService.stop();
+//console.log('num is', num);
+		if (num !== -1) {
+			SMSoundService.stop();
+			SMVibrationService.stop();
+		}
 	})
-	.catch((err) => console.log('Err:',err));
+	.catch((err) => {console.log('Err Stop Reel:',err);throw new TypeError('RPC3 err')});
     }
 
     checkPrize() {
@@ -315,7 +316,7 @@ console.log('accId', result);
         let lastSymbol = '';
         let maxSymbol = '';
         let maxPrize = 0;
-console.log('combi_final', currentCombination);
+//console.log('combi_final', currentCombination);
         for (let i = 0; i < reelCount; ++i) {
             const symbol = currentCombination[i];
             const occurrences = occurrencesCount[symbol] = lastSymbol === symbol ? occurrencesCount[symbol] + 1 : 1;
@@ -406,13 +407,10 @@ console.log('combi_final', currentCombination);
             else if (this.already === false && this.boundAccount === false) this.switchOneMode(); //new?
             else if (this.boundAccount === false) window.location.reload();
         } else {
-            ++this.currentReel;
+            
+		++this.currentReel;
 
-            this.stopReel(currentReel);
-
-            if (currentReel === this.reels.length - 1) {
-                this.stop();
-            }
+		this.stopReel(currentReel).then(() => {if (currentReel === this.reels.length - 1) this.stop()}).catch(() => {--this.currentReel; console.log('OK!'); return});
         }
     }
 

@@ -59,7 +59,7 @@ if ($mode eq "get_random") {
 	
 	exit unless ($reel >= 0 && $reel < 5);
 	
-	#$rand = 8 if ($reel < 3); #test
+	#$rand = $max-1 if ($reel > 0 && $reel < 5); #test
 
 	if ($reel ne '4') {
 		$cmd = "update sj_sessions set r$reel=$rand where session='$Coo'";
@@ -78,7 +78,7 @@ if ($mode eq "get_random") {
 #print STDERR "reel4: new coo? $new_coo_arrived, gnum is $gnum, addr is $addr!\n";
 
 		unless ($new_coo_arrived) {
-			my $cmd = "update sj_sessions set gnum=$new_gnum, r4=$rand where session='$Coo'";
+			my $cmd = "update sj_sessions set gnum=$new_gnum, r4=$rand, max=$max where session='$Coo'";
 			my $result=$dbconn->prepare($cmd);
 			$result->execute();
 		} else {
@@ -89,7 +89,7 @@ if ($mode eq "get_random") {
 			my $gnum = ${${$listresult}[0]}[0];
 			my $good_acc_id = ${${$listresult}[0]}[1];
 			if ($gnum eq '2' && length($good_acc_id) == 48 && substr($good_acc_id,0,1) == '5') {
-				my $cmd = "update sj_sessions set last_addr='$good_acc_id', r4=$rand where session='$Coo'";
+				my $cmd = "update sj_sessions set last_addr='$good_acc_id', r4=$rand, max=$max where session='$Coo'";
 				my $result=$dbconn->prepare($cmd);
 				$result->execute();
 			}		
@@ -98,7 +98,37 @@ if ($mode eq "get_random") {
 
 
 	print $rand;
-} else {
+
+} elsif ($mode eq "get_claim") {
+	$comm = "select r0, r1, r2, r3, r4, addr, last_addr, gnum, max from sj_sessions where session='$Coo'";
+	&getTable;
+	my $a = ${${$listresult}[0]}[0];
+	my $b = ${${$listresult}[0]}[1];
+	my $c = ${${$listresult}[0]}[2];
+	my $d = ${${$listresult}[0]}[3];
+	my $e = ${${$listresult}[0]}[4];
+	my $acc_id = ${${$listresult}[0]}[5];
+	my $last_acc_id = ${${$listresult}[0]}[6];
+	my $gnum = ${${$listresult}[0]}[7];
+	my $max = ${${$listresult}[0]}[8];
+	my $claim = defined($query->param('claim')) ? $query->param('claim') : 0;
+	
+	my $case = 0;
+	
+	exit if ($a eq '-1' || $b eq '-1' || $c eq '-1' || $d eq '-1' || $e eq '-1') ; #incomplete game
+	
+	$case = 3 if (($a eq $b && $a eq $c && $a ne $d) || ($b eq $c && $b eq $d && $b ne $e) || ($c eq $d && $c eq $e && $c ne $b));
+	$case = 4 if (($a eq $b && $a eq $c && $a eq $d && $a ne $e) || ($b eq $c && $b eq $d && $b eq $e && $b ne $a));
+	$case = 5 if ($a eq $b && $a eq $c && $a eq $d && $a eq $e);
+	
+	#maxOccurrences * (maxPrize / symbols.length) / reelCount - formula from the slotjs
+	my $calc = ($case * (($c+1)/$max))/5;
+	
+print STDERR "Jackpot: case is $case, sym is $c, max is $max, calc is $calc, claim is $claim!\n";
+	
+	print $calc;
+	
+} elsif ($mode eq "get_coo") {
 	
 	$comm = "select count(*) from sj_sessions where session = '$Coo'";
 	&getTable;
