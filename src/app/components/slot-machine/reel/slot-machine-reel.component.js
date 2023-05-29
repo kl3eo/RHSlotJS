@@ -106,7 +106,6 @@ export class SlotMachineReel {
         const index = respo;
 	const stopAt = index * alpha;
 //console.log('respo', respo, 'angle', angle, 'alpha', alpha, 'stop', stopAt,'this_angle', this.angle, 'delta', deltaAlpha);
-//console.log('respo', respo);
         const animationName = `stop-${ this.index }`;
         const animationDuration = stopAtAnimation(
             animationName,

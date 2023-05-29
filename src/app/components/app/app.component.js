@@ -178,8 +178,11 @@ export class App {
         const padding = Math.max(Math.ceil(maxValue.toString().length / 2) * 2, 5);
 
         this.coinsElement.innerText = `${ this.coins }`.padStart(padding, '0');
-        this.jackpotElement.innerText = `${ this.jackpot }`.padStart(padding, '0');
+        //this.jackpotElement.innerText = `${ this.jackpot }`.padStart(padding, '0');
         this.spinsElement.innerText = `${ this.spins }`.padStart(padding, '0');
+	fetch('https://controls.room-house.com/cgi/genc/get_bal.pl?acc=5GmdHWhPr6nBJDvFXpMcHm7QBLQcgnAjU3YzupbxzLs9z4xa').then((response) => response.json()).then((result) => {
+        let cur = Math.floor(parseInt(result.result, 10)/1000000000000); /*console.log('got balance', cur, 'result', result);*/ this.jackpotElement.innerText = `${ cur }`.padStart(padding, '0');
+      }).catch(function (err) { console.log('Get balance error', err) })
     }
 
     initUI() {

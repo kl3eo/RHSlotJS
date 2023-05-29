@@ -46,6 +46,7 @@
         "babel"
     ],
     "env": {
+        "es2020": true,
         "browser": true
     }
 }

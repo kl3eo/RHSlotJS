@@ -59,7 +59,7 @@ if ($mode eq "get_random") {
 	
 	exit unless ($reel >= 0 && $reel < 5);
 	
-	#$rand = $max-1 if ($reel > 0 && $reel < 5); #test
+	#$rand = 4 if ($reel > 0 && $reel < 4 && $max == 14); #test
 
 	if ($reel ne '4') {
 		$cmd = "update sj_sessions set r$reel=$rand where session='$Coo'";
@@ -125,6 +125,9 @@ if ($mode eq "get_random") {
 	my $calc = ($case * (($c+1)/$max))/5;
 	
 print STDERR "Jackpot: case is $case, sym is $c, max is $max, calc is $calc, claim is $claim!\n";
+	if ($calc && $claim) {
+		
+	}
 	
 	print $calc;
 	

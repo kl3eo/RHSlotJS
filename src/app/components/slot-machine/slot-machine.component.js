@@ -193,7 +193,7 @@ console.log('accId', result);
         this.currentReel = 0;
         this.zoomOut();
         this.display.classList.remove(SlotMachine.C_IS_WIN, SlotMachine.C_IS_FAIL);
-        this.reels.forEach((reel) => reel.reset());
+        //this.reels.forEach((reel) => reel.reset());
         resetAnimations();
 
         SMSoundService.coin();
@@ -230,7 +230,8 @@ console.log('accId', result);
         const { reels, speed, currentReel, lastUpdate } = this;
         const now = performance.now();
         const deltaTime = now - lastUpdate;
-        const deltaAlpha = deltaTime * speed;
+	let k = (5+currentReel)/5;
+        const deltaAlpha = deltaTime * speed *k;
 
         if (currentReel === null || this.isPaused) {
             return;
@@ -299,11 +300,9 @@ console.log('accId', result);
 //console.log('combi'+reelIndex, this.currentCombination);
         this.reels[reelIndex].stop(speed, deltaAlpha, reelIndex, this.currentCombination)
 	.then((num) => {
-//console.log('num is', num);
-		if (num !== -1) {
-			SMSoundService.stop();
-			SMVibrationService.stop();
-		}
+//console.log('num is', num);	
+		SMSoundService.stop();
+		SMVibrationService.stop();
 	})
 	.catch((err) => {console.log('Err Stop Reel:',err);throw new TypeError('RPC3 err')});
     }

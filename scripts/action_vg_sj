@@ -15,7 +15,7 @@ my $par = 11;
 
 if ($ddositsuko > $par) {
 	exit if ($ddositsuko > $par+1); #important not to apply again
-	my $applied = apply_firewall();
+	my $applied = apply_firewall($a);
 	
 	if ($applied) {
 
@@ -151,6 +151,8 @@ return $counter;
 }
 
 sub apply_firewall {
+
+my $a = shift;
 
 system("sudo /usr/local/bin/ip_apply $a");
 print STDERR "sudo /usr/local/bin/ip_apply $a\n";
