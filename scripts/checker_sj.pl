@@ -60,6 +60,7 @@ if ($mode eq "get_random") {
 	exit unless ($reel >= 0 && $reel < 5);
 	
 	#$rand = 4 if ($reel > 0 && $reel < 4 && $max == 14); #test
+	#$rand = 3 if ($reel > 0 && $reel < 4 && $max == 11); #test2
 
 	if ($reel ne '4') {
 		$cmd = "update sj_sessions set r$reel=$rand where session='$Coo'";
@@ -100,6 +101,7 @@ if ($mode eq "get_random") {
 	print $rand;
 
 } elsif ($mode eq "get_claim") {
+
 	$comm = "select r0, r1, r2, r3, r4, addr, last_addr, gnum, max from sj_sessions where session='$Coo'";
 	&getTable;
 	my $a = ${${$listresult}[0]}[0];
@@ -113,6 +115,8 @@ if ($mode eq "get_random") {
 	my $max = ${${$listresult}[0]}[8];
 	my $claim = defined($query->param('claim')) ? $query->param('claim') : 0;
 	
+	exit unless (length($last_acc_id) || length($acc_id));
+	
 	my $case = 0;
 	
 	exit if ($a eq '-1' || $b eq '-1' || $c eq '-1' || $d eq '-1' || $e eq '-1') ; #incomplete game
@@ -124,9 +128,16 @@ if ($mode eq "get_random") {
 	#maxOccurrences * (maxPrize / symbols.length) / reelCount - formula from the slotjs
 	my $calc = ($case * (($c+1)/$max))/5;
 	
-print STDERR "Jackpot: case is $case, sym is $c, max is $max, calc is $calc, claim is $claim!\n";
+print STDERR "get_claim: case is $case, sym is $c, max is $max, calc is $calc, claim is $claim!\n";
 	if ($calc && $claim) {
 		
+		my $curr_jp = `node /opt/nvme/polka/get_bal.js --address=5GmdHWhPr6nBJDvFXpMcHm7QBLQcgnAjU3YzupbxzLs9z4xa`;
+		$acc_id = length($last_acc_id) && !length($acc_id) && $gnum == 0 ? $last_acc_id : $acc_id;
+		my $val = $calc * ($curr_jp/1000000000000);
+		my $ret = `node /opt/nvme/polka/send_elbrus.js --val=$val --to=$acc_id`;
+print STDERR "get_claim: sending with \'node /opt/nvme/polka/send_elbrus.js --val=$val --to=$acc_id\'!s\n";
+		print $ret;
+		exit;
 	}
 	
 	print $calc;
@@ -143,7 +154,6 @@ print STDERR "Jackpot: case is $case, sym is $c, max is $max, calc is $calc, cla
 
 }
 
-		
 $dbconn->disconnect;
 exit;
 
