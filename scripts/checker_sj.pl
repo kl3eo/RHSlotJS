@@ -61,7 +61,8 @@ if ($mode eq "get_random") {
 	
 	#$rand = 4 if ($reel > 0 && $reel < 4 && $max == 14); #test
 	#$rand = 3 if ($reel > 0 && $reel < 4 && $max == 11); #test2
-	#$rand = 5 if ($reel < 3 && $max == 12); #test3
+	#$rand = 5 if ($reel < 3 && $max == 10); #test3
+	#$rand = 0 if ($reel < 3 && $max == 12); #test4
 
 	if ($reel ne '4') {
 		$cmd = "update sj_sessions set r$reel=$rand where session='$Coo'";
@@ -132,10 +133,10 @@ if ($mode eq "get_random") {
 	
 print STDERR "get_claim: case is $case, sym is $c, max is $max, calc is $calc, claim is $claim!\n";
 	if ($calc && $claim) {
-#CREATE TABLE winners (acc_id text, sum numeric, date_and_time timestamp default now(), ip text, calc numeric, jp numeric);		
+#CREATE TABLE winners (id serial, acc_id text, sum numeric, date_and_time timestamp default now(), ip text, calc numeric, jp numeric);		
 		my $curr_jp = `node /opt/nvme/polka/get_bal.js --address=5GmdHWhPr6nBJDvFXpMcHm7QBLQcgnAjU3YzupbxzLs9z4xa`;
 		$acc_id = length($last_acc_id) && !length($acc_id) && $gnum == 0 ? $last_acc_id : $acc_id;
-		my $val = $calc * int($curr_jp/1000000000000);
+		my $val = int($calc * int($curr_jp/1000000000000));
 		my $ret = `node /opt/nvme/polka/send_elbrus.js --val=$val --to=$acc_id`;
 print STDERR "get_claim: sending with \'node /opt/nvme/polka/send_elbrus.js --val=$val --to=$acc_id\'!s\n";
 		my $cmd = "insert into winners (acc_id, sum, ip, calc, jp) values (?,?,?,?,?)";
