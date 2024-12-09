@@ -48,27 +48,29 @@
     <main class="app__main" id="main">
         <section class="sm__base">
             <!-- <div class="sm__display sm__display--background"></div> -->
-            <div class="sm__reelsContainer"></div>
+            <div class="sm__reelsContainer" id="reelsBox">
+              <div id="messenger" style="position:fixed;z-index:10111;top:49%;font-size:24px;color:#e00;text-align:center;width:100%;min-width:360px;display:none;"></div>
+            </div>
             <div class="sm__display"></div>
         </section>
     </main>
-
 
     <div class="app__coverLeft"></div>
     <div class="app__coverRight"></div>
 
     <section class="modal__root" id="spbinderModal">
-        <h2 class="modal__title spbinder__title">
+        <h2 class="modal__title spbinder__title" style="height:36px;">
             <span class="modal__titleIcon spbinder__titleIcon">🏆</span>Pay to Play
             <button class="modal__button" aria-label="Close Popup and Resume Game">
                 <span class="modal__buttonIcon">×</span>
             </button>
         </h2>
+	<div id="spinner" style="text-align:center;margin:0 auto;width:100%;min-width:360px;line-height:24px;font-size:24px">..loading wallet..</div>
+<!-- div id="spinner" style="background:url(/logo/spinning-wheel3.gif) center center no-repeat;text-align:center;margin:0 auto;width:10%;height:10%"></div -->
 <iframe id="ifr" frameborder="0" style="overflow-x:hidden;overflow=y:hidden;text-align:left;height:100%;width:100%;background:#F9FAF7;display:none;">
-<div style="font-size:48px;margin:20% auto;cursor:pointer;" onclick="document.getElementById('ifr').src='coins2.room.house.com'">Click to reload</span></iframe>
+<div style="font-size:48px;margin:20% auto;cursor:pointer;" onclick="document.getElementById('ifr').src='coins2.room.house.com'">Click to reload</div></iframe>
         <%- include ../spbinder/spbinder.template.ejs %>
     </section>
-    
     <section class="modal__root" id="instructionsModal">
         <h2 class="modal__title instructions__title">
             <span class="modal__titleIcon instructions__titleIcon">🕹️</span>Instructions

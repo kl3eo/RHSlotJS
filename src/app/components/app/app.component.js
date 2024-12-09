@@ -89,7 +89,7 @@ export class App {
         this.handleGetPrice = this.handleGetPrice.bind(this);
 
         let focusActive = false;
-	
+
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Tab' && !focusActive) {
                 focusActive = true;
@@ -111,9 +111,9 @@ export class App {
     }
 
     handleUseCoin() {
-        if (this.spins === 2) this.endGame().then(() => {console.log('ended game'); return}).catch((err) => console.log('Err:', err));
-	
-	localStorage.coins = this.coins = Math.max(this.coins - 1, 0);
+        if (this.spins === 2) this.endGame().then(() => { /*console.log('ended game');*/ }).catch((err) => console.log('Err:', err));
+
+        localStorage.coins = this.coins = Math.max(this.coins - 1, 0);
         localStorage.jackpot = ++this.jackpot;
         localStorage.spins = ++this.spins;
         localStorage.lastSpin = this.lastSpin = Date.now();
@@ -121,56 +121,56 @@ export class App {
         this.refreshGameInfo();
     }
 
-    async setCoo () {
-      const urlee = this.makeUrlee('action_vg_sj')
-      fetch(urlee).then((response) => response.json()).then((result) => {
-        console.log('set session', result);
-      }).catch(function (err) { console.log('Error', err) })
-    }
-    
-    makeUrlee (s) {
-      const inFrame = window !== window.top
-      const h = inFrame ? 'https://slotjs.room-house.com' : this.getParentOrigin()
-      const reh = /https:\/\//gi
-      const hh = h.replace(reh, '')
-      const poh = hh.split(':')
-      const hhh = hh.split('.')
-      const checkerPort = (hhh[0] === 'aspen' || hhh[0] === 'cube' || hhh[0] === 'slotjs') ? '' : ':8453'
-      const genc = (hhh[0] === 'dussel' || hhh[0] === 'slotjs') ? '' : '/genc'
-      const u = 'https://' + poh[0] + checkerPort + '/cgi' + genc + '/' + s
-//console.log('here urlee is', u);
-      return u
+    async setCoo() {
+        const urlee = this.makeUrlee('action_vg_sj');
+        fetch(urlee).then((response) => response.json()).then((result) => {
+            console.log('set session', result);
+        }).catch((err) => { console.log('Error', err); });
     }
 
-    getParentOrigin () {
-      let a = this.alpha; //paranoid flags
-      const locationAreDistinct = (window.location !== window.parent.location)
-      const parentOrigin = ((locationAreDistinct ? document.referrer : document.location) || '').toString()
-      if (parentOrigin) {
-        return new URL(parentOrigin).origin
-      }
-      const currentLocation = document.location
-      if (currentLocation.ancestorOrigins && currentLocation.ancestorOrigins.length) {
-        return currentLocation.ancestorOrigins[0]
-      }
-      return ''
+    makeUrlee(s) {
+        const inFrame = window !== window.top;
+        const h = inFrame ? 'https://slotjs.room-house.com' : this.getParentOrigin();
+        const reh = /https:\/\//gi;
+        const hh = h.replace(reh, '');
+        const poh = hh.split(':');
+        const hhh = hh.split('.');
+        const checkerPort = (hhh[0] === 'aspen' || hhh[0] === 'cube' || hhh[0] === 'slotjs') ? '' : ':8453';
+        const genc = (hhh[0] === 'dussel' || hhh[0] === 'slotjs') ? '' : '/genc';
+        const u = `https://${ poh[0] }${ checkerPort }/cgi${ genc }/${ s }`;
+        // console.log('here urlee is', u);
+        return u;
+    }
+
+    getParentOrigin() {
+        const a = this.alpha; // paranoid flags
+        const locationAreDistinct = (window.location !== window.parent.location);
+        const parentOrigin = ((locationAreDistinct ? document.referrer : document.location) || '').toString();
+        if (parentOrigin) {
+            return new URL(parentOrigin).origin;
+        }
+        const currentLocation = document.location;
+        if (currentLocation.ancestorOrigins && currentLocation.ancestorOrigins.length) {
+            return currentLocation.ancestorOrigins[0];
+        }
+        return '';
     }
 
     async endGame() {
-	this.slotMachine.boundAccount = false;
-//console.log('endGame: set bound to', this.slotMachine.boundAccount);
-	this.setCoo().then(() => {console.log('reset cookie'); localStorage.coins = this.coins = 3; localStorage.spins = this.spins = 0;});
+        this.slotMachine.boundAccount = false;
+        // console.log('endGame: set bound to', this.slotMachine.boundAccount);
+        this.setCoo().then(() => { /*console.log('reset cookie');*/ localStorage.coins = this.coins = 3; localStorage.spins = this.spins = 0; });
     }
 
     handleGetPrice(jackpotPercentage) {
         const price = Math.min(Math.max(Math.ceil(jackpotPercentage * this.jackpot), 10), this.jackpot);
 
-        //localStorage.jackpot = this.jackpot = Math.max(this.jackpot - price, 0) || 1000;
-        //localStorage.coins = this.coins += price;
-	fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_claim&claim='+jackpotPercentage, {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
-		console.log('claimed', jackpotPercentage, 'result', respo);
-		this.refreshGameInfo();
-	}).catch(err => console.log(err));
+        // localStorage.jackpot = this.jackpot = Math.max(this.jackpot - price, 0) || 1000;
+        // localStorage.coins = this.coins += price;
+        fetch(`https://${ window.location.hostname }/cgi/checker_sj.pl?mode=get_claim&claim=${ jackpotPercentage }`, { credentials: 'include' }).then((respo) => respo.text()).then((respo) => {
+            console.log('claimed', jackpotPercentage, 'result', respo);
+            this.refreshGameInfo();
+        }).catch((err) => console.log(err));
     }
 
     refreshGameInfo() {
@@ -178,11 +178,11 @@ export class App {
         const padding = Math.max(Math.ceil(maxValue.toString().length / 2) * 2, 5);
 
         this.coinsElement.innerText = `${ this.coins }`.padStart(padding, '0');
-        //this.jackpotElement.innerText = `${ this.jackpot }`.padStart(padding, '0');
+        // this.jackpotElement.innerText = `${ this.jackpot }`.padStart(padding, '0');
         this.spinsElement.innerText = `${ this.spins }`.padStart(padding, '0');
-	fetch('https://controls.room-house.com/cgi/genc/get_bal.pl?acc=5GmdHWhPr6nBJDvFXpMcHm7QBLQcgnAjU3YzupbxzLs9z4xa').then((response) => response.json()).then((result) => {
-        let cur = Math.floor(parseInt(result.result, 10)/1000000000000); /*console.log('got balance', cur, 'result', result);*/ this.jackpotElement.innerText = `${ cur }`.padStart(padding, '0');
-      }).catch(function (err) { console.log('Get balance error', err) })
+        fetch('https://controls.room-house.com/cgi/genc/get_bal.pl?acc=5GmdHWhPr6nBJDvFXpMcHm7QBLQcgnAjU3YzupbxzLs9z4xa').then((response) => response.json()).then((result) => {
+            const cur = Math.floor(parseInt(result.result, 10) / 1000000000000); /* console.log('got balance', cur, 'result', result); */ this.jackpotElement.innerText = `${ cur }`.padStart(padding, '0');
+        }).catch((err) => { console.log('Get balance error', err); });
     }
 
     initUI() {
@@ -203,20 +203,20 @@ export class App {
         const playButtonElement = document.querySelector(App.S_PLAY);
 
         if (isFirstTime) {
-            
+
             playButtonElement.onclick = () => {
                 this.isFirstTime = localStorage.firstTime = false;
 
                 playButtonElement.setAttribute('hidden', true);
 
                 this.instructionsModal.close();
-		this.spbinderModal.close();
+                this.spbinderModal.close();
 
                 document.activeElement.blur();
 
                 // this.slotMachine.start();
-		this.setCoo();
-		
+                this.setCoo();
+
             };
         } else {
             playButtonElement.setAttribute('hidden', true);
@@ -230,7 +230,7 @@ export class App {
             false,
             this.handleModalToggle,
         );
-	
+
         // TODO: Pass params as options, except for root selector or some of the basic ones...:
 
         // Init/render instructions modal, which might be open straight away:

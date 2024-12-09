@@ -21,7 +21,7 @@ function invokeCallback() {
 export function setGlobalClickAndTabHandler(cb) {
     callback = cb;
 
-    console.trace('setGlobalClickAndTabHandler');
+    // console.trace('setGlobalClickAndTabHandler');
 
     if (IS_IOS) {
         document.ontouchstart = startTap;

@@ -57,12 +57,12 @@ export class SlotMachineReel {
             shadowOpacityWeight = 1;
         }
 
-        //const shadowCount = this.shadowCount = Math.max(2, Math.round((diameter - 0.5 - (2 * index)) * Math.PI / symbols.length));
-        const shadowCount = this.shadowCount = 2; //hack ash
+        // const shadowCount = this.shadowCount = Math.max(2, Math.round((diameter - 0.5 - (2 * index)) * Math.PI / symbols.length));
+        const shadowCount = this.shadowCount = 2; // hack ash
         const beta = 1 / shadowCount;
 
-        //shuffle(symbols);
-//console.log('symbols', symbols);
+        // shuffle(symbols);
+        // console.log('symbols', symbols);
         symbols.forEach((symbol, symbolIndex) => {
             const cellFigure = createElement(C_FIGURE, symbol);
             const cell = createElement(C_CELL, cellFigure, symbolIndex * alpha);
@@ -76,11 +76,11 @@ export class SlotMachineReel {
                     alpha * (symbolIndex + (beta * shadowIndex)),
                     `opacity: ${ shadowOpacityWeight * (1 - (beta * shadowIndex)) }; `,
                 ));
-//console.log('created', root.children);	
+                // console.log('created', root.children);
             }
         });
     }
-    
+
     reset() {
         const { root, style, stopAt } = this;
 
@@ -92,37 +92,38 @@ export class SlotMachineReel {
     }
 
     async stop(speed, deltaAlpha, ri, obj) {
-      const { alpha, root } = this;
-	
-      let fData = new FormData();	
-      fData.append('mode', 'get_random');
-      fData.append('num', ri);
-      fData.append('max', root.children.length);
-      if (ri === 4) {fData.append('old_coo', localStorage.session); /*console.log('sending old sess', localStorage.session);*/}
-	
-     fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl', {body: fData, method: 'post', credentials: 'include'}).then(respo => respo.text()).then((respo) => {
-        if (respo.match(/^[0-9]+$/) === null) throw new TypeError('RPC err')
-        const angle = (360 - this.angle - deltaAlpha) % 360;
-        const index = respo;
-	const stopAt = index * alpha;
-//console.log('respo', respo, 'angle', angle, 'alpha', alpha, 'stop', stopAt,'this_angle', this.angle, 'delta', deltaAlpha);
-        const animationName = `stop-${ this.index }`;
-        const animationDuration = stopAtAnimation(
-            animationName,
-            (360 - angle) % 360,
-            (360 - stopAt) % 360,
-            alpha,
-            speed,
-        ) * SlotMachineReel.STOP_ANIMATION_DURATION_MULTIPLIER;
+        const { alpha, root } = this;
 
-        this.stopAt = stopAt;
-        this.style.animation = `${ animationName } ${ animationDuration }ms ease-out forwards`;
-        root.classList.add(SlotMachineReel.C_IS_STOP);
-	let indexo = this.shadowCount * index; //hack ash
-	let re = (root.children[index * this.shadowCount] || root.children[0]).innerText
-	obj.push(re);
-//console.log('obj is', obj);
-        return; // hack ash
-      }).catch(err => {console.log('fetch:', err); throw new TypeError('RPC2 err')});
+        const fData = new FormData();
+        fData.append('mode', 'get_random');
+        fData.append('num', ri);
+        fData.append('max', root.children.length);
+        if (ri === 4) { fData.append('old_coo', localStorage.session); /* console.log('sending old sess', localStorage.session); */ }
+
+        fetch(`https://${ window.location.hostname }/cgi/checker_sj.pl`, { body: fData, method: 'post', credentials: 'include' }).then((respo) => respo.text()).then((respo) => {
+            if (respo.match(/^[0-9]+$/) === null) throw new TypeError('RPC err');
+            const angle = (360 - this.angle - deltaAlpha) % 360;
+            const index = respo;
+            const stopAt = index * alpha;
+            // console.log('respo', respo, 'angle', angle, 'alpha', alpha, 'stop', stopAt,'this_angle', this.angle, 'delta', deltaAlpha);
+            const animationName = `stop-${ this.index }`;
+            const animationDuration = stopAtAnimation(
+                animationName,
+                (360 - angle) % 360,
+                (360 - stopAt) % 360,
+                alpha,
+                speed,
+            ) * SlotMachineReel.STOP_ANIMATION_DURATION_MULTIPLIER;
+
+            this.stopAt = stopAt;
+            this.style.animation = `${ animationName } ${ animationDuration }ms ease-out forwards`;
+            root.classList.add(SlotMachineReel.C_IS_STOP);
+            const indexo = this.shadowCount * index; // hack ash
+            const re = (root.children[index * this.shadowCount] || root.children[0]).innerText;
+            obj.push(re);
+            // console.log('obj is', obj);
+            // hack ash
+        }).catch((err) => { console.log('fetch:', err); throw new TypeError('RPC2 err'); });
     }
+
 }

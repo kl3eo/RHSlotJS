@@ -10,6 +10,7 @@ async function main () {
 
 const api = await ApiPromise.create(
 {provider, types: {
+"AccountInfo": "AccountInfoWithDualRefCount",
 "Address": "AccountId",
 "LookupSource": "AccountId",
 "Account": {

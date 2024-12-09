@@ -2,14 +2,19 @@ import { SYMBOLS_CLASSIC } from '../../constants/symbols.constants';
 import { resetAnimations } from '../../utils/animation.util';
 import { SMSoundService } from '../../services/slot-machine/sound/slot-machine-sound.service';
 import { SMVibrationService } from '../../services/slot-machine/vibration/slot-machine-vibration.service';
-import { IS_FIREFOX, IS_IOS_FIREFOX } from '../../constants/browser.constants';
+import { IS_FIREFOX, IS_IOS_FIREFOX, IS_IPHONE } from '../../constants/browser.constants';
 import { setGlobalClickAndTabHandler } from '../../utils/touch.util';
 
 import { SlotMachineReel } from './reel/slot-machine-reel.component';
 
 import './slot-machine.style.scss';
 
-const accId = (async () => fetch('https://' + window.location.hostname + '/cgi/get_acc_id_sj.pl?par=1&t=sj'))();
+const accId = (async () => fetch(`https://${ window.location.hostname }/cgi/get_acc_id_sj.pl?par=1&t=sj`))();
+let saver = '';
+
+const soundEffect = new Audio();
+soundEffect.autoplay = true;
+soundEffect.volume=0.4;
 
 export class SlotMachine {
 
@@ -39,7 +44,7 @@ export class SlotMachine {
     static BLIP_RATE = 4;
     static FIREFOX_SHADOW_WEIGHT = 0.5;
     static APP_PADDING = 32;
-    static SP_SETTER_URL = "https://coins2.room-house.com";
+    static SP_SETTER_URL = 'https://coins2.room-house.com';
 
     // Elements:
     wrapper;
@@ -75,8 +80,8 @@ export class SlotMachine {
         symbols = SYMBOLS_CLASSIC,
         isPaused = false,
         speed = -0.552, // TODO: Make enum and match sounds too.
-	already = false,
-	boundAccount = false,
+        already = false,
+        boundAccount = false,
     ) {
         this.init(wrapper, handleUseCoin, handleGetPrice, reelCount, symbols, speed);
 
@@ -91,27 +96,28 @@ export class SlotMachine {
             this.resume();
         }
 
-        window.addEventListener("message", function(event) {
+        window.addEventListener('message', function (event) {
 
-		if (event.origin !== SlotMachine.SP_SETTER_URL) {
-			return;
-		}
+            if (event.origin !== SlotMachine.SP_SETTER_URL) {
+                return;
+            }
 
-		if (event.origin === SlotMachine.SP_SETTER_URL) {
-			var obj = JSON.parse(event.data);
-			if (obj.action === 'Bound') {
-				this.boundAccount = true;
-				console.log('eventListener: set bound to', this.boundAccount);
-				let ifrm = document.getElementById("ifr");
-				ifrm.style.display = "none";
-				document.getElementById("toggleSpbinder").click(); //close
-				window.location.reload();
-
-			} else {
-				console.log('Undefined action received from wallet!');
-			}
-		}  
-	});
+            if (event.origin === SlotMachine.SP_SETTER_URL) {
+                const obj = JSON.parse(event.data);
+                if (obj.action === 'Bound') {
+                    this.boundAccount = true;
+                    console.log('eventListener: set bound to', this.boundAccount);
+                    document.getElementById('ifr').style.display = 'none';
+                    document.getElementById('spinner').style.display='block';
+                    document.getElementById('toggleSpbinder').click(); // close
+                    // window.location.reload();
+                } else if (obj.action === 'Rehash') {
+                    document.getElementById('ifr').src = `${ saver }`; // console.log('1: rehashing to', saver);
+                } else {
+                    console.log('Undefined action received from wallet!');
+                }
+            }
+        });
     }
 
     init(
@@ -132,7 +138,7 @@ export class SlotMachine {
 
         const alpha = this.alpha = 360 / symbols.length;
         const shuffledSymbols = [...symbols];
-//console.log('shuffled_syms', shuffledSymbols);
+        // console.log('shuffled_syms', shuffledSymbols);
 
         const diameter = (2 * reelCount) + SlotMachine.UNITS_CENTER;
 
@@ -146,7 +152,7 @@ export class SlotMachine {
         const { reelsContainer, reels } = this;
 
         for (let reelIndex = 0; reelIndex < reelCount; ++reelIndex) {
-            let randomAngle = alpha * Math.floor(Math.random() * (360/alpha));
+            const randomAngle = alpha * Math.floor(Math.random() * (360 / alpha));
             const reel = new SlotMachineReel(reelIndex, alpha, shuffledSymbols, diameter, randomAngle);
             reel.style.transform = `rotate(${ randomAngle }deg)`;
             reelsContainer.appendChild(reel.root);
@@ -156,73 +162,107 @@ export class SlotMachine {
         // Additional reel at the end that acts as a "cover" in case we set a background color on them and we only want
         // to see a ring even in the inner-most one, instead of a filled circle:
         reelsContainer.appendChild(new SlotMachineReel(reelCount).root);
+
+        //if (IS_IPHONE) {
+            // document.getElementById('reelsBox').style.left = '2vw';
+            // this.root.style.left = '20px';
+        //}
     }
-           
-    switchOneMode = () => {
-	this.already = true;	
-	accId.then(data => data.json()).then((result) => {
-//console.log('result is', result);
-		if ( result === null || result === '' || result.result === null || result.result === '') {	
-			fetch('https://' + window.location.hostname + '/cgi/checker_sj.pl?mode=get_coo', {credentials: 'include'}).then(respo => respo.text()).then((respo) => {
-				let sess = respo;
-console.log('sess is', sess); 
-				if (sess === '0' || sess === 0) {
-					fetch('https://' + window.location.hostname + '/cgi/action_vg_sj').then((response) => response.json()).then((res) => {
-					console.log('set session', res)
-					}).catch(function (err) { console.log('Error', err) });
-					return;
-				} else {
-					localStorage.setItem('session', sess);
-				}
-				
-				let ifrm = document.getElementById("ifr");
-				ifrm.setAttribute("src", SlotMachine.SP_SETTER_URL + '/?session=' + sess);
-				ifrm.style.display = "block";
-				document.getElementById("toggleSpbinder").click(); //open
-			}).catch(err => console.log(err));
-		} else {
-console.log('accId', result);
-			if (result && result.result && result.result.length) {this.start();}
-		}
-	});	
+
+    switchOneMode = (accHost, sumHost) => {
+        this.already = true;
+        const spSetterUrlCur = `${ SlotMachine.SP_SETTER_URL }/#/binder/to/:${ accHost }/amount/:${ sumHost }`;
+        accId.then((data) => data.json()).then((result) => {
+            // console.log('result is', result);
+            if (result === null || result === '' || result.result === null || result.result === '') {
+                fetch(`https://${ window.location.hostname }/cgi/checker_sj.pl?mode=get_coo`, { credentials: 'include' }).then((respo) => respo.text()).then((respo) => {
+                    const sess = respo;
+                    console.log('sess is', sess);
+                    if (sess === '0' || sess === 0) {
+                        fetch(`https://${ window.location.hostname }/cgi/action_vg_sj`).then((response) => response.json()).then((res) => {
+                            console.log('set session', res);
+                        }).catch((err) => { console.log('Error', err); });
+                        return;
+                    }
+                    localStorage.setItem('session', sess);
+
+
+                    const ifrm = document.getElementById('ifr');
+                    saver = `${ spSetterUrlCur }/?session=${ sess }&ref=${ window.location.hostname }`;
+                    ifrm.setAttribute('src', saver);
+                    // console.log('just set src to', ifrm.src, 'with', saver);
+                    document.getElementById('ifr').src = saver;
+                    setTimeout(() => {
+                      // console.log('2: rehashed to', saver);
+                      ifrm.style.display = 'block';
+                      /*if (IS_IPHONE) {
+                          ifrm.style.width = '290px';
+                          ifrm.style.height = '50%';
+                          ifrm.style.marginLeft = '0px';
+                          // ifrm.style.marginTop = '-60px';
+                      }*/
+                      document.getElementById('spinner').style.display='none';
+                    }, 3000);
+
+                    document.getElementById('toggleSpbinder').click(); // open
+                }).catch((err) => console.log(err));
+            } else {
+                //console.log('accId', result);
+                //setTimeout(() => {
+                document.getElementById('ifr').src = null;
+                document.getElementById('ifr').src = document.getElementById('ifr').src; //reload frame to flush coin api
+                console.log('nulled ifr');
+                //}, 5000);
+                if (result && result.result && result.result.length) { this.start(); }
+            }
+        });
     };
-            
+
     start() {
-        this.handleUseCoin();
-        this.currentCombination = [];
-        this.currentReel = 0;
-        this.zoomOut();
-        this.display.classList.remove(SlotMachine.C_IS_WIN, SlotMachine.C_IS_FAIL);
-        //this.reels.forEach((reel) => reel.reset());
-        resetAnimations();
+        document.getElementById('messenger').innerHTML = ' ..spin.. ';
+        document.getElementById('messenger').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('messenger').style.display = 'none';
+            document.getElementById('messenger').innerHTML = '';
+            this.handleUseCoin();
+            this.currentCombination = [];
+            this.currentReel = 0;
+            this.zoomOut();
+            if (!IS_IPHONE) this.display.classList.remove(SlotMachine.C_IS_WIN, SlotMachine.C_IS_FAIL);
+            // this.reels.forEach((reel) => reel.reset());
+            resetAnimations();
 
-        SMSoundService.coin();
-        SMVibrationService.start();
+            if (!IS_IPHONE) SMSoundService.coin();
+            if (IS_IPHONE && localStorage.sound !== 'false') soundEffect.src = '/sounds/coin.mp3';
+            SMVibrationService.start();
 
-        this.lastUpdate = performance.now();
-        requestAnimationFrame(() => this.tick());
+            this.lastUpdate = performance.now();
+            requestAnimationFrame(() => this.tick());
+        }, 1000); // wait API
     }
 
     stop() {
 
         setTimeout(() => {
-          const currentPrize = this.checkPrize();
+            const currentPrize = this.checkPrize();
 
-          this.currentReel = null;
-          this.zoomIn();
+            this.currentReel = null;
+            this.zoomIn();
 
-          if (currentPrize) {
-            SMSoundService.win();
+            if (currentPrize) {
+                if (!IS_IPHONE) SMSoundService.win();
+                if (IS_IPHONE && localStorage.sound !== 'false') soundEffect.src = '/sounds/win.mp3';
 
-            this.display.classList.add(SlotMachine.C_IS_WIN);
+                if (!IS_IPHONE) this.display.classList.add(SlotMachine.C_IS_WIN);
 
-            this.handleGetPrice(currentPrize);
-          } else {
-            SMSoundService.unlucky();
+                this.handleGetPrice(currentPrize);
+            } else {
+                if (!IS_IPHONE) SMSoundService.unlucky();
+                if (IS_IPHONE && localStorage.sound !== 'false') soundEffect.src = '/sounds/unlucky.mp3';
 
-            this.display.classList.add(SlotMachine.C_IS_FAIL);
-          }
-        }, "2400");
+                if (!IS_IPHONE) this.display.classList.add(SlotMachine.C_IS_FAIL);
+            }
+        }, '2400');
 
     }
 
@@ -230,8 +270,8 @@ console.log('accId', result);
         const { reels, speed, currentReel, lastUpdate } = this;
         const now = performance.now();
         const deltaTime = now - lastUpdate;
-	let k = (5+currentReel)/5;
-        const deltaAlpha = deltaTime * speed *k;
+        const k = (5 + currentReel) / 5;
+        const deltaAlpha = deltaTime * speed * k;
 
         if (currentReel === null || this.isPaused) {
             return;
@@ -239,7 +279,7 @@ console.log('accId', result);
 
         const blipCounter = this.blipCounter = (this.blipCounter + 1) % SlotMachine.BLIP_RATE;
 
-        if (blipCounter === 0) SMSoundService.blip(1 - (this.blipFading * currentReel));
+        if (blipCounter === 0 && !IS_IPHONE) SMSoundService.blip(1 - (this.blipFading * currentReel));
 
         this.lastUpdate = now;
 
@@ -291,20 +331,21 @@ console.log('accId', result);
         style.setProperty(SlotMachine.V_WRAPPER_SIZE, `${ wrapperSize }px`);
         style.setProperty(SlotMachine.V_REEL_SIZE, `${ reelSize }px`);
         style.setProperty(SlotMachine.V_DISPLAY_SIZE, `${ reelSize * reelCount }px`);
-        style.setProperty(SlotMachine.V_DISPLAY_ZOOM, `${ root.offsetWidth / display.offsetWidth }`);
+        if (!IS_IPHONE) style.setProperty(SlotMachine.V_DISPLAY_ZOOM, `${ root.offsetWidth / display.offsetWidth }`);
     }
 
     async stopReel(reelIndex) {
         const { speed } = this;
         const deltaAlpha = (performance.now() - this.lastUpdate) * speed;
-//console.log('combi'+reelIndex, this.currentCombination);
+        // console.log('combi'+reelIndex, this.currentCombination);
         this.reels[reelIndex].stop(speed, deltaAlpha, reelIndex, this.currentCombination)
-	.then((num) => {
-//console.log('num is', num);	
-		SMSoundService.stop();
-		SMVibrationService.stop();
-	})
-	.catch((err) => {console.log('Err Stop Reel:',err);throw new TypeError('RPC3 err')});
+            .then((num) => {
+                // console.log('num is', num);
+                if (!IS_IPHONE) SMSoundService.stop();
+                if (IS_IPHONE && localStorage.sound !== 'false') soundEffect.src = '/sounds/stop.mp3';
+                SMVibrationService.stop();
+            })
+            .catch((err) => { console.log('Err Stop Reel:', err); throw new TypeError('RPC3 err'); });
     }
 
     checkPrize() {
@@ -315,7 +356,7 @@ console.log('accId', result);
         let lastSymbol = '';
         let maxSymbol = '';
         let maxPrize = 0;
-//console.log('combi_final', currentCombination);
+        // console.log('combi_final', currentCombination);
         for (let i = 0; i < reelCount; ++i) {
             const symbol = currentCombination[i];
             const occurrences = occurrencesCount[symbol] = lastSymbol === symbol ? occurrencesCount[symbol] + 1 : 1;
@@ -401,15 +442,15 @@ console.log('accId', result);
         const { currentReel } = this;
 
         if (currentReel === null) {
-//console.log('bound is', this.boundAccount, 'already is', this.already);
+            // console.log('bound is', this.boundAccount, 'already is', this.already);
             if (this.boundAccount === true) this.start();
-            else if (this.already === false && this.boundAccount === false) this.switchOneMode(); //new?
+            else if (this.already === false && this.boundAccount === false) this.switchOneMode('5GmdHWhPr6nBJDvFXpMcHm7QBLQcgnAjU3YzupbxzLs9z4xa', 20); // new?
             else if (this.boundAccount === false) window.location.reload();
         } else {
-            
-		++this.currentReel;
 
-		this.stopReel(currentReel).then(() => {if (currentReel === this.reels.length - 1) this.stop()}).catch(() => {--this.currentReel; console.log('OK!'); return});
+            ++this.currentReel;
+
+            this.stopReel(currentReel).then(() => { if (currentReel === this.reels.length - 1) this.stop(); }).catch(() => { --this.currentReel; console.log('OK!'); });
         }
     }
 
